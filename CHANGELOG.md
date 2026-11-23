@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.20.1 - 2026-11-23
 
+- Two scripts build the desktop installers locally: `scripts/build-macos.sh` makes the disk images for Apple Silicon and Intel, and `scripts/build-windows.sh` the installers for x86-64 and ARM64.
 - The model in the AI service's settings is typed, so a model the service does not list may be named, as a server the user runs may serve; the image models the key can use are listed under the field and picked from by a tap, and what is typed narrows them.
 
 ## 0.20.0 - 2026-11-20

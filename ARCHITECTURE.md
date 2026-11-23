@@ -35,6 +35,7 @@ Mirra is an NSGo app for macOS, iOS, Android and Windows that puts a face, an ou
 | `apps/website/src/i18n/head.ts` | Each page's title, description, canonical and alternate links, Open Graph and Twitter cards and structured data. |
 | `.github/workflows/ci.yml`, `package.yml`, `release.yml` | CI on pull requests and `main`; the packages of every platform, with a release's signed appcasts; the release of `main` once CI passes, versioned from its Conventional Commits. |
 | `.github/scripts/` | The release's version (`next-version.sh`, `set-version.sh`), its notes from `CHANGELOG.md` (`changelog.sh`) and their test. |
+| `scripts/build-macos.sh`, `scripts/build-windows.sh` | The local builds of the desktop installers: the macOS disk images for Apple Silicon and Intel, and the Windows installers for x86-64 and ARM64, each with nsgo build. |
 | `apps/website/src/routes/og.$lang.tsx`, `apps/website/scripts/og.sh` | The 1200x630 card each language's Open Graph image is taken from, served by the dev server only, and the script that takes them into `public/`. |
 
 ## Boundaries

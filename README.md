@@ -93,6 +93,8 @@ go tool nsgo build                   # packages for every target in nsgo.yaml, i
 
 `go tool nsgo doctor` says which targets this machine can build and run.
 
+Two scripts in the repository's root build the desktop installers: `scripts/build-macos.sh` makes the disk images for Apple Silicon and Intel, and `scripts/build-windows.sh` the installers for x86-64 and ARM64. Each takes `-t` for one architecture and `-o` for the output directory; the macOS one signs and notarizes with `-s` and `-n`, and the Windows one signs the installer with `-c`. The Windows one needs NSIS's compiler, `makensis` (`brew install makensis` or `apt-get install nsis`), as it writes the installer.
+
 ### Set up the image API
 
 Open **Me** on a phone, or the settings button at the top right on the desktop, choose a provider, enter its key and press **Test connection**. The model is typed below the key, so any model may be named, and the image models the key can use are listed from the provider once the key is entered and offered under the field to pick from by a tap; it starts on the provider's own. The address and size also start on the provider's own and sit under **Advanced**; change them only to use another region or gateway, and **Reset to defaults** puts them back. Alibaba Cloud Model Studio and Azure OpenAI, which a key can't list, offer no models to pick from. Azure OpenAI and a custom server ask for their address beside the key.

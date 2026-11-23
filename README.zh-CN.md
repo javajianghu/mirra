@@ -93,6 +93,8 @@ go tool nsgo build                   # 打包 nsgo.yaml 里列出的所有平台
 
 `go tool nsgo doctor` 会告诉你这台机器能构建、运行哪些平台。
 
+仓库根目录有两个脚本用来打包桌面版安装包：`scripts/build-macos.sh` 打 Apple 芯片和 Intel 的磁盘映像，`scripts/build-windows.sh` 打 x86-64 和 ARM64 的安装程序。两个脚本都用 `-t` 选架构、`-o` 选输出目录，macOS 的还用 `-s` 签名、`-n` 公证，Windows 的用 `-c` 签名。Windows 的脚本需要 NSIS 的编译器 `makensis`（`brew install makensis` 或 `apt-get install nsis`），安装程序由它生成。
+
 ### 配置生图接口
 
 手机上打开「我的」，桌面上点右上角的设置按钮，选一个服务商，填好 Key 后点「测试连接」。模型在 Key 下面直接填写，任何模型名都可以写；这把 Key 能用的图像模型会在填好 Key 后自动从服务商获取，显示在输入框下面，点一下就能选，默认用服务商自己的。接口地址和尺寸也默认用服务商自己的，收在「高级设置」里；只有要换地区或网关时才需要改，「恢复默认」可以一键改回。阿里云百炼和 Azure OpenAI 没法用 Key 列出模型，没有可选的模型。Azure OpenAI 和自定义服务的接口地址直接显示在 Key 旁边。

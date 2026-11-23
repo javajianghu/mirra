@@ -1,7 +1,7 @@
 # The name the app shows and its packages carry (Mirra.app, mirra-<version>-<target> in releases). The Release workflow bumps the version (.github/scripts/set-version.sh).
 name: Mirra
 id: ai.yldm.mirra
-version: 0.20.0
+version: 0.20.1
 # The app always shows its dark theme; the web page takes the same color while the app loads.
 appearance: dark
 
