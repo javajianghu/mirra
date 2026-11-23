@@ -212,6 +212,7 @@ func newStudio(cx *core.Scope, a App) *studio {
 	for _, p := range providers {
 		settings[p.ID] = providerSettings{url: stored(p.storageKey("url"), ""), key: core.NewSignal(cx, ""),
 			models: core.NewSignalFunc[[]string](cx, nil, slices.Equal), listing: core.NewSignal(cx, false), modelsErr: core.NewSignal(cx, ""),
+			query: core.NewSignal(cx, ""),
 			model: stored(p.storageKey("model"), ""), size: stored(p.storageKey("size"), "")}
 	}
 	var favorites []Item

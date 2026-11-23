@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The model in the AI service's settings is typed, so a model the service does not list may be named, as a server the user runs may serve; the image models the key can use are listed under the field and picked from by a tap, and what is typed narrows them.
+
 ## 0.20.0 - 2026-11-20
 
 - 130 backgrounds instead of 14, most of them outdoors: beaches, lakes, mountains, forests, fields, deserts, streets, old towns and harbors, besides a few rooms.

@@ -328,34 +328,62 @@ func (s *studio) testConnection() {
 	}()
 }
 
-// modelPicker chooses the model among those the key can use, searchable, with a button that lists them again. The chosen model and the preset's always show, listed or not; choosing the preset's keeps the setting following the preset. Its error shows under its card.
-func (s *studio) modelPicker(cx *core.Scope, p provider, set providerSettings, setModel func(string)) core.Node {
+// modelField is the model row's control: the model's name in a field, so a model the
+// service does not list may be used too, and, for a service that lists its models, a
+// button that lists them again.
+func (s *studio) modelField(cx *core.Scope, p provider, set providerSettings, setModel func(string), label string, listable bool) core.Node {
 	t := locales.For(cx)
-	value := func() string { return or(set.model.Get(), p.Model) }
-	options := func() []ui.Option[string] {
-		ids := slices.Clone(set.models.Get())
-		for _, id := range []string{p.Model, value()} {
-			if id != "" && !slices.Contains(ids, id) {
-				ids = append([]string{id}, ids...)
-			}
-		}
-		out := make([]ui.Option[string], len(ids))
-		for i, id := range ids {
-			out[i] = ui.Option[string]{Value: id, Label: id}
-		}
-		return out
+	input := ui.Input{Value: set.model.Get, OnChange: setModel, Label: label, Placeholder: p.Model, TestID: "model",
+		Style: core.Style{Width: core.Pct(100)}}
+	if !listable {
+		return core.View{Style: core.Style{Width: core.Pt(controlWidth)}, Children: []core.Node{input}}
 	}
-	picker := ui.Select[string]{Label: t.Model(), OptionsFunc: options, Value: value, Searchable: true, SearchPlaceholder: t.SearchModels(), Empty: t.NoModelMatches(),
-		TestID: "model", Style: core.Style{Width: core.Pct(100)},
-		OnChange: func(v string) {
-			if v == p.Model {
-				v = ""
-			}
-			setModel(v)
-		}}
 	refresh := ui.IconButton{Icon: lucide.RefreshCw, Label: t.RefreshModels(), TestID: "refresh-models", Size: 32, IconSize: 16, Disabled: set.listing.Get, OnPress: s.listModels}
 	return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 4, Width: core.Pt(controlWidth)}, Children: []core.Node{
-		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: []core.Node{picker}}, refresh}}
+		core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: []core.Node{input}}, refresh}}
+}
+
+// modelPills are the models the key can use, as pills to pick from by a tap: the
+// provider's own first, then the ones that were listed, with the chosen one filled.
+// Choosing the provider's own keeps the setting following the preset. What was typed
+// in the field narrows them, and none matching says so.
+func modelPills(cx *core.Scope, p provider, set providerSettings, setModel func(string)) core.Node {
+	t := locales.For(cx)
+	ids := []string{p.Model}
+	for _, id := range set.models.Get() {
+		if id != "" && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	if cur := set.model.Get(); cur != "" && !slices.Contains(ids, cur) {
+		ids = append(ids, cur)
+	}
+	query := strings.ToLower(strings.TrimSpace(set.query.Get()))
+	shown := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if query == "" || strings.Contains(strings.ToLower(id), query) {
+			shown = append(shown, id)
+		}
+	}
+	if len(shown) == 0 {
+		return core.Text{Content: t.NoModelMatches(), TestID: "no-model-matches",
+			StyleFunc: func() core.Style { return core.Style{FontSize: 13, Color: ui.ColorsOf(cx).Muted()} }}
+	}
+	value := func() string { return or(set.model.Get(), p.Model) }
+	pills := make([]core.Node, len(shown))
+	for i, id := range shown {
+		pills[i] = pill(cx, id, "model-"+id, func() bool { return value() == id }, func() {
+			// What was typed narrows the models no more, so all of them show again.
+			set.query.Set("")
+			if id == p.Model {
+				setModel("")
+				return
+			}
+			setModel(id)
+		}, false)
+	}
+	return core.Scroll{Horizontal: true, HideIndicator: true, Style: core.Style{Height: core.Pt(44), MinHeight: core.Pt(44), FlexShrink: 0}, Children: []core.Node{
+		core.View{Role: core.RoleGroup, Label: t.Model(), Style: core.Style{Direction: core.Row, Gap: 8, Padding: core.Symmetric(0, 12), AlignItems: core.AlignCenter}, Children: pills}}}
 }
 
 // controlWidth is the width of a settings row's control, so the rows' controls line up.
@@ -502,9 +530,14 @@ func (s *studio) serviceForm(cx *core.Scope) serviceForm {
 			modelLabel = t.Deployment
 		}
 		setModel := setStored("model", func(ps providerSettings) *core.Signal[string] { return ps.model })
-		var model core.Node = ui.Input{Value: set.model.Get, OnChange: setModel, Label: modelLabel(), Placeholder: p.Model, TestID: "model", Style: core.Style{Width: core.Pt(controlWidth)}}
-		if canListModels(p) {
-			model = s.modelPicker(cx, p, set, setModel)
+		// What is typed in the model field narrows the models on offer.
+		typeModel := func(v string) {
+			set.query.Set(v)
+			setModel(v)
+		}
+		listable := canListModels(p)
+		model := s.modelField(cx, p, set, typeModel, modelLabel(), listable)
+		if listable {
 			// The models are listed once the field shows, then again for a new key or a passed test.
 			core.Untracked(cx, func() bool {
 				if set.models.Get() == nil {
@@ -519,7 +552,19 @@ func (s *studio) serviceForm(cx *core.Scope) serviceForm {
 			if err := set.modelsErr.Get(); err != "" {
 				footer = t.ModelsFailed(err)
 			}
-			return ui.FormSection{Children: []core.Node{modelRow}, Footer: footer, TestID: "model-section"}
+			children := []core.Node{modelRow}
+			// The models the key can use are offered as pills to pick from by a tap. They are
+			// their own dynamic, so that what is typed in the field does not draw the field
+			// again and take the caret from it.
+			if listable {
+				children = append(children, core.Dynamic(func(cx *core.Scope) core.Node {
+					if len(set.models.Get()) == 0 {
+						return core.Group(nil)
+					}
+					return modelPills(cx, p, set, typeModel)
+				}))
+			}
+			return ui.FormSection{Children: children, Footer: footer, TestID: "model-section"}
 		}))
 
 		size := func() string { return or(set.size.Get(), p.Size) }

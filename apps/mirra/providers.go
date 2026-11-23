@@ -125,6 +125,8 @@ type providerSettings struct {
 	models    *core.Signal[[]string]
 	listing   *core.Signal[bool]
 	modelsErr *core.Signal[string]
+	// query is what was typed in the model field, which narrows the models on offer.
+	query *core.Signal[string]
 }
 
 // Storage keys of the settings before providers, read once to carry them over.

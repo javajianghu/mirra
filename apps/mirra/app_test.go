@@ -667,12 +667,12 @@ func TestModelIsChosenFromTheListedOnes(t *testing.T) {
 	app, _ := start(t, api, "k")
 	app.Press("text:Me")
 	app.WaitFor("id:model", wait)
-	app.Press("id:model")
-	app.WaitFor("role:option gpt-image-2", wait)
-	if app.Exists("role:option gpt-5") {
+	// The models the key can use are offered as pills to pick from by a tap.
+	app.WaitFor("id:model-gpt-image-2", wait)
+	if app.Exists("id:model-gpt-5") {
 		t.Error("a chat model is offered")
 	}
-	app.Press("role:option gpt-image-2")
+	app.Press("id:model-gpt-image-2")
 	// gpt-image-2 is OpenAI's preset, so the setting follows the preset again.
 	if v, _ := app.Storage().GetItem(providerByID(providerOpenAI).storageKey("model")); v != "" {
 		t.Errorf("stored model = %q, want the preset's", v)
@@ -683,6 +683,27 @@ func TestModelIsChosenFromTheListedOnes(t *testing.T) {
 	app.Press("id:generate")
 	app.WaitFor("id:shot-image", wait)
 	if got := api.last().Model; got != "gpt-image-2" {
+		t.Errorf("model = %q", got)
+	}
+}
+
+// TestAModelCanBeTyped lets a model the service does not list be used, as a server the user runs may serve.
+func TestAModelCanBeTyped(t *testing.T) {
+	api := &fakeAPI{}
+	app, _ := start(t, api, "k")
+	app.Press("text:Me")
+	app.WaitFor("id:model", wait)
+	app.Clear("id:model")
+	app.Type("id:model", "my-own-model")
+	if v, _ := app.Storage().GetItem(providerByID(providerOpenAI).storageKey("model")); v != "my-own-model" {
+		t.Errorf("stored model = %q, want the typed one", v)
+	}
+	app.Press("text:Studio")
+	app.Press("id:row-pose")
+	choose(t, app, poseStand)
+	app.Press("id:generate")
+	app.WaitFor("id:shot-image", wait)
+	if got := api.last().Model; got != "my-own-model" {
 		t.Errorf("model = %q", got)
 	}
 }
